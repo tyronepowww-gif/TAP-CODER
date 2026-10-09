@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TAP + Code Maker</title>
+<style>
+:root{
+  --bg:#15171b;--panel:#22252b;--panel2:#2b3038;
+  --ink:#f2f3f5;--muted:#9ca5b2;--line:#414752;
+  --green:#a8ff60;--greenDark:#18391e;--red:#ff7474;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:14px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}
+button,input,textarea,select{font:inherit}
+button{background:var(--panel2);color:var(--ink);border:1px solid var(--line);
+  padding:10px 12px;border-radius:7px;cursor:pointer}
+button:active{transform:scale(.98)}
+button.primary{background:var(--green);color:#101510;border-color:var(--green);font-weight:800}
+button.danger{color:#ffaaaa}
+input,textarea,select{width:100%;background:#111317;color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;padding:10px;min-width:0}
+textarea{resize:vertical}
+label{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}
+header{position:sticky;top:0;z-index:10;background:#17191e;
+  border-bottom:1px solid var(--line);padding:12px;display:flex;
+  justify-content:space-between;align-items:center;gap:10px}
+.brand{font-size:16px;font-weight:900;letter-spacing:1px}
+.brand span{color:var(--green)}
+#saveStatus{font-size:11px;color:var(--green)}
+nav{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px;
+  background:#1b1e23;position:sticky;top:54px;z-index:9}
+nav button{font-weight:800}
+nav button.active{background:var(--greenDark);color:var(--green);border-color:#527a48}
+main{max-width:1100px;margin:auto;padding:12px}
+.view{display:none}.view.active{display:block}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  padding:12px;margin-bottom:12px;min-width:0}
+h2{font-size:15px;margin:0 0 10px}
+h3{font-size:12px;margin:0 0 8px;color:var(--green)}
+.muted{color:var(--muted);font-size:12px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row>*{flex:1}
+.row .fixed{flex:0 0 auto}
+.grid{display:grid;grid-template-columns:1fr;gap:12px}
+.toolbar{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}
+.toolbar button{flex:1}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:8px}
+.tabs button{flex:1;min-width:68px;padding:8px}
+.tabs button.active{background:var(--greenDark);color:var(--green);border-color:#527a48}
+.editor{min-height:300px;font-size:12px;line-height:1.55;tab-size:2}
+#projectList,#cartList{display:grid;gap:7px;margin-top:10px}
+.item{display:flex;gap:8px;align-items:center;text-align:left;width:100%;
+  padding:10px;background:#191c21}
+.item.selected{border-color:var(--green);background:var(--greenDark)}
+.item .itemText{flex:1;min-width:0}
+.item strong{display:block;overflow-wrap:anywhere}
+.item small{display:block;color:var(--muted);font-size:10px}
+#preview{width:100%;height:350px;background:white;border:1px solid var(--line);
+  border-radius:7px}
+#tapShell{max-width:440px;margin:0 auto;background:#b9bcb3;color:#172016;
+  border:5px solid #72776f;border-radius:24px;padding:13px;
+  box-shadow:inset 0 0 0 2px #e1e2da}
+#tapTop{display:flex;justify-content:space-between;align-items:center;
+  font-weight:900;font-size:12px;margin-bottom:9px}
+#screen{height:240px;background:#9bbc0f;color:#0f380f;border:5px solid #313b2c;
+  box-shadow:inset 0 0 0 3px #829d0c;padding:12px;overflow:auto;
+  font-size:12px;white-space:normal}
+#screen h2,#screen h3{color:#0f380f}
+#screen button{background:#8bac0f;color:#0f380f;border:2px solid #306230;
+  border-radius:2px;font-size:11px;padding:7px}
+#screen input,#screen textarea{background:#c7df52;color:#0f380f;border:1px solid #306230}
+#actionBar{margin-top:8px;display:none;gap:4px;flex-direction:column}
+#actionBar.show{display:flex}
+#actionBar .act{background:#8bac0f;color:#0f380f;border:2px solid #306230;border-radius:2px;
+  font-size:11px;padding:6px 8px;text-align:left;font-weight:800}
+#actionBar .act.sel{background:#0f380f;color:#9bbc0f}
+#tapControls{display:grid;grid-template-columns:1fr 1fr;gap:22px;
+  align-items:center;padding:18px 6px 5px}
+.dpad{display:grid;grid-template-columns:40px 40px 40px;grid-template-rows:38px 38px 38px;
+  justify-content:center;align-items:center}
+.dpad button{padding:0;background:#353a42;color:white;border:0;border-radius:5px;font-weight:900}
+.dpad .up{grid-column:2;grid-row:1}.dpad .left{grid-column:1;grid-row:2}
+.dpad .center{grid-column:2;grid-row:2;background:#4a5059}
+.dpad .right{grid-column:3;grid-row:2}.dpad .down{grid-column:2;grid-row:3}
+.ab{display:flex;justify-content:center;gap:12px;transform:rotate(-18deg)}
+.ab button{border-radius:50%;width:52px;height:52px;background:#6d243d;color:white;
+  border:3px solid #8e4960;font-weight:900}
+#tapFooter{display:flex;justify-content:center;gap:15px;color:#555d51;
+  font-size:10px;font-weight:900;margin-top:12px}
+#cartEditor{min-height:260px}
+#toast{position:fixed;bottom:15px;left:50%;transform:translateX(-50%);
+  background:var(--green);color:#101510;padding:10px 15px;border-radius:8px;
+  z-index:30;display:none;max-width:90%;font-weight:800}
+.hidden{display:none!important}
+hr{border:0;border-top:1px solid var(--line);margin:12px 0}
+@media(min-width:760px){
+ main{padding:18px}
+ .grid.two{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ .editor{min-height:420px}
+ #preview{height:480px}
+ #screen{height:275px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><span>TAP</span> / CODE MAKER</div>
+  <div id="saveStatus">LOCAL SAVE READY</div>
+</header>
+
+<nav>
+  <button id="navCode" class="active" onclick="showView('code')">01 / CODE MAKER</button>
+  <button id="navTap" onclick="showView('tap')">02 / TAP CONSOLE</button>
+</nav>
+
+<main>
+<section id="codeView" class="view active">
+  <div class="grid two">
+    <div>
+      <div class="panel">
+        <h2>Project workspace</h2>
+        <label for="projectName">PROJECT NAME</label>
+        <input id="projectName" placeholder="Untitled project" maxlength="100">
+        <div class="toolbar">
+          <button class="primary" onclick="saveProject()">Save</button>
+          <button onclick="newProject()">New</button>
+          <button onclick="duplicateProject()">Duplicate</button>
+        </div>
+        <div class="row">
+          <button onclick="exportProject()">Export project</button>
+          <button class="danger" onclick="deleteProject()">Delete</button>
+        </div>
+        <div id="projectList"></div>
+        <hr>
+        <div class="row">
+          <button onclick="exportBackup()">Backup everything</button>
+          <button onclick="document.getElementById('backupFile').click()">Restore backup</button>
+          <input id="backupFile" type="file" accept=".json,application/json" class="hidden"
+            onchange="importBackup(event)">
+        </div>
+        <p class="muted">Projects and cartridges have separate save records. Backup files can be moved to another device.</p>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <h2>Editor</h2>
+        <div class="tabs">
+          <button id="tabHTML" class="active" onclick="setEditor('html')">HTML</button>
+          <button id="tabCSS" onclick="setEditor('css')">CSS</button>
+          <button id="tabJS" onclick="setEditor('js')">JS</button>
+          <button id="tabTheory" onclick="setEditor('theory')">Theory</button>
+        </div>
+        <textarea id="editor" class="editor" spellcheck="false"
+          placeholder="Write your code here..."></textarea>
+        <div class="toolbar">
+          <button class="primary" onclick="buildProject()">Build / Preview</button>
+          <button onclick="saveProject()">Save now</button>
+          <button onclick="clearCurrentEditor()">Clear editor</button>
+        </div>
+        <div class="row">
+          <button onclick="convertProjectToCart()">Make TAP cartridge</button>
+          <button onclick="copyEditor()">Copy editor text</button>
+        </div>
+        <p class="muted" id="editorHint">HTML source for this project.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Live preview</h2>
+    <iframe id="preview" title="Project preview" sandbox="allow-scripts"></iframe>
+    <p class="muted">Preview code runs inside a sandboxed frame. Do not enter secrets into untrusted code.</p>
+  </div>
+</section>
+
+<section id="tapView" class="view">
+  <div class="grid two">
+    <div>
+      <div class="panel">
+        <h2>Chibi TAP</h2>
+        <div id="tapShell">
+          <div id="tapTop"><span>TAP CORE</span><span>POWER ●</span></div>
+          <div id="screen">TAP CORE READY</div>
+          <div id="actionBar"></div>
+          <div id="tapControls">
+            <div class="dpad">
+              <button class="up" onclick="tapInput('UP')">▲</button>
+              <button class="left" onclick="tapInput('LEFT')">◀</button>
+              <button class="center" onclick="tapInput('MENU')">●</button>
+              <button class="right" onclick="tapInput('RIGHT')">▶</button>
+              <button class="down" onclick="tapInput('DOWN')">▼</button>
+            </div>
+            <div class="ab">
+              <button onclick="tapInput('B')">B</button>
+              <button onclick="tapInput('A')">A</button>
+            </div>
+          </div>
+          <div id="tapFooter"><span>SELECT</span><span>START</span></div>
+        </div>
+        <div class="toolbar">
+          <button onclick="home()">TAP Home</button>
+          <button onclick="showView('code')">Code Maker</button>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <h2>Cartridge library</h2>
+        <div class="row">
+          <input id="cartSearch" placeholder="Search cartridges..." oninput="renderCartList()">
+          <select id="cartFilter" onchange="renderCartList()">
+            <option value="all">All types</option>
+            <option value="system">System</option>
+            <option value="training">Training</option>
+            <option value="game">Games</option>
+            <option value="tools">Tools</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div class="toolbar">
+          <button class="primary" onclick="newCart()">New cartridge</button>
+          <button onclick="document.getElementById('cartFile').click()">Import JS</button>
+          <input id="cartFile" type="file" accept=".js,.txt" class="hidden"
+            onchange="importCartFile(event)">
+        </div>
+        <div id="cartList"></div>
+        <hr>
+        <p class="muted">Built-in cartridges are preserved. Custom cartridges can be edited, saved, exported and launched.</p>
+      </div>
+
+      <div class="panel">
+        <h2>Cartridge editor</h2>
+        <label for="cartName">CARTRIDGE NAME</label>
+        <input id="cartName" maxlength="100" placeholder="My cartridge">
+        <div class="row" style="margin-top:8px">
+          <div>
+            <label for="cartCategory">CATEGORY</label>
+            <select id="cartCategory">
+              <option value="custom">Custom</option>
+              <option value="game">Game</option>
+              <option value="training">Training</option>
+              <option value="tools">Tools</option>
+              <option value="system">System</option>
+            </select>
+          </div>
+          <div>
+            <label for="cartVersion">VERSION</label>
+            <input id="cartVersion" value="1.0">
+          </div>
+        </div>
+        <label for="cartDescription" style="margin-top:8px">DESCRIPTION</label>
+        <input id="cartDescription" placeholder="What does this cartridge do?">
+        <label for="cartEditor" style="margin-top:8px">JAVASCRIPT SOURCE</label>
+        <textarea id="cartEditor" class="editor" spellcheck="false"></textarea>
+        <div class="toolbar">
+          <button class="primary" onclick="saveCart()">Save cartridge</button>
+          <button onclick="launchEditedCart()">Launch editor</button>
+          <button onclick="exportCart()">Export JS</button>
+        </div>
+        <p class="muted">JavaScript cartridges execute code. Only import and launch code you trust.</p>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+<div id="toast"></div>
+
+<script>
+"use strict";
+
+const DB_KEY = "tap_code_maker_dual_v1";
+const $ = id => document.getElementById(id);
+const uid = prefix => prefix + "_" + Date.now().toString(36) +
+  "_" + Math.random().toString(36).slice(2,7);
+const TAB_IDS = {html:"tabHTML",css:"tabCSS",js:"tabJS",theory:"tabTheory"};
+
+let data = loadData();
+let currentProjectId = data.projects[0]?.id || null;
+let currentEditor = "html";
+let currentCartId = null;
+let activeCart = null;
+let projectSaveTimer = null;
+let cartSaveTimer = null;
+let runningCleanup = null;
+
+function starterProject(){
+  return {
+    id:uid("project"),name:"Welcome Project",created:Date.now(),updated:Date.now(),
+    html:'<main><h1>Hello, TAP.</h1><p>Your project is saved locally.</p><button onclick="document.querySelector(\'p\').textContent=\'Button works!\'">Test button</button></main>',
+    css:'body{font-family:system-ui,sans-serif;background:#edf3df;color:#203820;padding:2rem}main{max-width:600px;margin:auto}button{padding:10px 16px;border:0;border-radius:8px;background:#234e32;color:white}',
+    js:'console.log("Welcome to Code Maker");',
+    theory:'Project notes:\n- Build small experiments.\n- Save projects independently from TAP cartridges.\n- Export backups regularly.'
+  };
+}
+
+function starterCartSource(){
+return `TAP_CARTRIDGE({
+  name: "MY CUSTOM CARTRIDGE",
+  description: "A simple editable TAP cartridge",
+  version: "1.0",
+  group: "custom"
+}, function(tap) {
+  tap.onLaunch(function() {
+    let count = 0;
+    function draw() {
+      tap.ui.screen(
+        "<h2>MY CARTRIDGE</h2>" +
+        "<p>Button presses: " + count + "</p>" +
+        "<p>UP/DOWN = choose | A = select | B = home</p>"
+      );
+    }
+    tap.input.set([
+      {label:"INCREASE", action:function(){count++;draw();}},
+      {label:"RESET", action:function(){count=0;draw();}},
+      {label:"HOME", action:function(){tap.navigation.home();}}
+    ]);
+    draw();
+  });
+});`;
+}
+
+function builtinCarts(){
+  return [
+    {id:"builtin_home",name:"TAP HOME",description:"Main console menu",category:"system",version:"1.0",builtin:true,source:""},
+    {id:"builtin_scouter",name:"SCOUTER LITE",description:"A compact stat dashboard",category:"tools",version:"1.0",builtin:true,source:""},
+    {id:"builtin_reaction",name:"REACTION LAB",description:"Practice reaction decisions",category:"training",version:"1.0",builtin:true,source:""},
+    {id:"builtin_code",name:"CODE PAD",description:"Open your saved projects",category:"tools",version:"1.0",builtin:true,source:""},
+    {id:"builtin_pixel",name:"PIXEL QUEST",description:"A tiny choice-based RPG",category:"game",version:"1.0",builtin:true,source:""}
+  ];
+}
+
+function loadData(){
+  try{
+    const parsed = JSON.parse(localStorage.getItem(DB_KEY));
+    if(parsed && Array.isArray(parsed.projects) && Array.isArray(parsed.carts)){
+      if(!parsed.projects.length) parsed.projects.push(starterProject());
+      if(!parsed.stats) parsed.stats = {launches:0};
+      return parsed;
+    }
+  }catch(e){}
+  return {version:1,projects:[starterProject()],carts:[],stats:{launches:0}};
+}
+
+function persist(){
+  try{
+    localStorage.setItem(DB_KEY,JSON.stringify(data));
+    $("saveStatus").textContent = "SAVED " + new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+  }catch(e){
+    $("saveStatus").textContent = "SAVE FAILED";
+    toast("Could not save. Export a backup or free browser storage.");
+  }
+}
+
+function scheduleSave(){
+  $("saveStatus").textContent = "UNSAVED CHANGES…";
+  clearTimeout(projectSaveTimer);
+  projectSaveTimer = setTimeout(()=>{
+    const p = getProject(currentProjectId);
+    if(p){
+      readEditorInto(p);
+      p.name = $("projectName").value.trim() || "Untitled project";
+    }
+    persist();
+    renderProjectList();
+  },350);
+}
+
+function toast(message){
+  $("toast").textContent=message;
+  $("toast").style.display="block";
+  clearTimeout(toast.timer);
+  toast.timer=setTimeout(()=>$("toast").style.display="none",2200);
+}
+
+function getProject(id){return data.projects.find(p=>p.id===id)}
+function allCarts(){return [...builtinCarts(),...data.carts]}
+function getCart(id){return allCarts().find(c=>c.id===id)}
+
+function showView(view){
+  $("codeView").classList.toggle("active",view==="code");
+  $("tapView").classList.toggle("active",view==="tap");
+  $("navCode").classList.toggle("active",view==="code");
+  $("navTap").classList.toggle("active",view==="tap");
+  if(view==="tap" && !activeCart) home();
+}
+
+function setEditor(type){
+  currentEditor=type;
+  Object.keys(TAB_IDS).forEach(k=>{
+    $(TAB_IDS[k]).classList.toggle("active",k===type);
+  });
+  const p=getProject(currentProjectId);
+  $("editor").value=p ? (p[type]||"") : "";
+  $("editorHint").textContent={
+    html:"HTML source for this project.",
+    css:"CSS source for this project.",
+    js:"JavaScript source for this project.",
+    theory:"Notes, ideas, specifications, and theory for this project."
+  }[type];
+}
+
+/* Switching tabs must keep the text typed in the tab being left. */
+const _setEditor = setEditor;
+setEditor = function(type){
+  const p=getProject(currentProjectId);
+  if(p && type!==currentEditor) readEditorInto(p);
+  _setEditor(type);
+};
+
+function readEditorInto(p){
+  if(!p)return;
+  p[currentEditor]=$("editor").value;
+  p.updated=Date.now();
+}
+
+function saveProject(){
+  const p=getProject(currentProjectId);
+  if(!p){toast("Create a project first.");return}
+  p.name=$("projectName").value.trim()||"Untitled project";
+  readEditorInto(p);
+  persist();renderProjectList();
+  toast("Project saved");
+}
+
+/* Pass saveCurrent=false when the editor does not hold the current project's text
+   (startup, after delete, after restore) so nothing gets overwritten. */
+function loadProject(id,saveCurrent=true){
+  const p=getProject(id);if(!p)return;
+  if(saveCurrent && currentProjectId && currentProjectId!==id){
+    const old=getProject(currentProjectId);
+    if(old)readEditorInto(old);
+  }
+  currentProjectId=id;
+  $("projectName").value=p.name;
+  _setEditor(currentEditor);
+  renderProjectList();
+  buildProject(false);
+}
+
+function newProject(){
+  const old=getProject(currentProjectId);
+  if(old)readEditorInto(old);
+  const p={id:uid("project"),name:"Untitled project",created:Date.now(),updated:Date.now(),
+    html:"",css:"",js:"",theory:""};
+  data.projects.unshift(p);
+  currentProjectId=p.id;
+  $("projectName").value=p.name;
+  _setEditor("html");persist();renderProjectList();buildProject(false);
+  toast("New project created");
+}
+
+function duplicateProject(){
+  const p=getProject(currentProjectId);if(!p)return;
+  readEditorInto(p);
+  p.name=$("projectName").value.trim()||p.name;
+  const copy={...p,id:uid("project"),name:p.name+" copy",created:Date.now(),updated:Date.now()};
+  data.projects.unshift(copy);currentProjectId=copy.id;
+  $("projectName").value=copy.name;_setEditor(currentEditor);
+  persist();renderProjectList();toast("Project duplicated");
+}
+
+function deleteProject(){
+  if(data.projects.length<=1){toast("Keep at least one project.");return}
+  const p=getProject(currentProjectId);if(!p)return;
+  if(!confirm('Delete project "'+p.name+'"?'))return;
+  data.projects=data.projects.filter(x=>x.id!==currentProjectId);
+  currentProjectId=data.projects[0].id;
+  loadProject(currentProjectId,false);persist();renderProjectList();toast("Project deleted");
+}
+
+function renderProjectList(){
+  const root=$("projectList");root.innerHTML="";
+  data.projects.forEach(p=>{
+    const b=document.createElement("button");
+    b.className="item"+(p.id===currentProjectId?" selected":"");
+    b.innerHTML='<span class="itemText"><strong></strong><small></small></span>';
+    b.querySelector("strong").textContent=p.name;
+    b.querySelector("small").textContent="Updated "+new Date(p.updated).toLocaleString();
+    b.onclick=()=>loadProject(p.id);root.appendChild(b);
+  });
+}
+
+function buildProject(shouldSave=true){
+  const p=getProject(currentProjectId);if(!p)return;
+  if(shouldSave){readEditorInto(p);p.name=$("projectName").value.trim()||"Untitled project";p.updated=Date.now();persist();renderProjectList()}
+  const html=p.html||"";
+  const css=p.css||"";
+  const js=p.js||"";
+  $("preview").srcdoc='<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css.replace(/<\/style/gi,"<\\/style")+'</style></head><body>'+html+'<script>'+js.replace(/<\/script/gi,"<\\/script")+'<\/script></body></html>';
+  if(shouldSave)toast("Preview built");
+}
+
+function clearCurrentEditor(){
+  if(!confirm("Clear the current editor tab?"))return;
+  $("editor").value="";scheduleSave();
+}
+
+async function copyEditor(){
+  try{await navigator.clipboard.writeText($("editor").value);toast("Copied")}
+  catch(e){$("editor").select();toast("Select and copy the text manually")}
+}
+
+function downloadText(filename,text,type="text/plain"){
+  const blob=new Blob([text],{type});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download=filename;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+function safeFilename(name){return (name||"untitled").replace(/[^a-z0-9-_]+/gi,"_").slice(0,70)||"untitled"}
+
+function exportProject(){
+  const p=getProject(currentProjectId);if(!p)return;
+  readEditorInto(p);p.name=$("projectName").value.trim()||p.name;persist();
+  downloadText(safeFilename(p.name)+".json",JSON.stringify(p,null,2),"application/json");
+}
+
+function exportBackup(){
+  if(currentProjectId){const p=getProject(currentProjectId);if(p)readEditorInto(p)}
+  persist();
+  downloadText("tap-code-maker-backup.json",JSON.stringify({
+    app:"TAP Code Maker",version:1,exportedAt:new Date().toISOString(),
+    projects:data.projects,carts:data.carts,stats:data.stats
+  },null,2),"application/json");
+  toast("Backup exported");
+}
+
+function importBackup(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const obj=JSON.parse(reader.result);
+      if(!Array.isArray(obj.projects)||!Array.isArray(obj.carts))throw new Error("Invalid backup");
+      if(!confirm("Restore backup? This replaces the current saved projects and custom cartridges."))return;
+      data.projects=obj.projects.filter(p=>p&&p.id&&typeof p==="object");
+      data.carts=obj.carts.filter(c=>c&&c.id&&typeof c==="object"&&!c.builtin);
+      if(obj.stats&&typeof obj.stats==="object")data.stats=obj.stats;
+      if(!data.projects.length)data.projects=[starterProject()];
+      currentProjectId=data.projects[0].id;
+      currentCartId=null;persist();loadProject(currentProjectId,false);
+      renderProjectList();renderCartList();toast("Backup restored");
+    }catch(e){toast("Could not restore: invalid backup file")}
+    finally{event.target.value=""}
+  };
+  reader.readAsText(file);
+}
+
+function convertProjectToCart(){
+  const p=getProject(currentProjectId);if(!p)return;
+  readEditorInto(p);
+  p.name=$("projectName").value.trim()||p.name;
+  /* Scope `body` selectors to the cartridge container so project CSS works on the TAP screen. */
+  const css=(p.css||"").replace(/(^|[\s,}])body(?=[\s,{.:#\[])/g,"$1.projectRoot");
+  const payload=JSON.stringify({html:p.html||"",css:css,js:p.js||""});
+  const source=
+"TAP_CARTRIDGE({\n"+
+"  name: "+JSON.stringify(p.name.toUpperCase())+",\n"+
+"  description: \"Converted from Code Maker project\",\n"+
+"  version: \"1.0\",\n"+
+"  group: \"custom\"\n"+
+"}, function(tap) {\n"+
+"  tap.onLaunch(function() {\n"+
+"    var P = "+payload+";\n"+
+"    tap.input.set([{label:\"HOME\", action:function(){tap.navigation.home();}}]);\n"+
+"    tap.ui.screen('<style>'+P.css+'</style><div class=\"projectRoot\">'+P.html+'</div>');\n"+
+"    try{ new Function('tap', P.js)(tap); }\n"+
+"    catch(e){ tap.ui.screen('<h2>PROJECT ERROR</h2><p>'+tap.util.escapeHTML(e.message)+'</p>'); }\n"+
+"  });\n"+
+"});";
+  const c={id:uid("cart"),name:p.name,description:"Converted from Code Maker project",
+    category:"custom",version:"1.0",source,created:Date.now(),updated:Date.now(),builtin:false};
+  data.carts.unshift(c);currentCartId=c.id;persist();renderCartList();fillCartEditor(c);
+  showView("tap");toast("Created separate cartridge copy");
+}
+
+/* ---------------- TAP CARTRIDGES ---------------- */
+
+function renderCartList(){
+  const root=$("cartList");root.innerHTML="";
+  const q=$("cartSearch").value.trim().toLowerCase();
+  const filter=$("cartFilter").value;
+  allCarts().filter(c=>
+    (filter==="all"||c.category===filter||(filter==="custom"&&!c.builtin))&&
+    (c.name+" "+c.description).toLowerCase().includes(q)
+  ).forEach(c=>{
+    const b=document.createElement("button");
+    b.className="item"+(c.id===currentCartId?" selected":"");
+    b.innerHTML='<span class="itemText"><strong></strong><small></small></span><span>›</span>';
+    b.querySelector("strong").textContent=c.name;
+    b.querySelector("small").textContent=(c.category||"custom").toUpperCase()+" · "+c.description;
+    b.onclick=()=>{currentCartId=c.id;fillCartEditor(c);renderCartList()};
+    root.appendChild(b);
+  });
+}
+
+function fillCartEditor(c){
+  $("cartName").value=c.name||"";
+  $("cartCategory").value=c.category||"custom";
+  $("cartVersion").value=c.version||"1.0";
+  $("cartDescription").value=c.description||"";
+  $("cartEditor").value=c.builtin?"// Built-in cartridge. Source is part of the app and is not editable.":(c.source||"");
+  $("cartEditor").readOnly=!!c.builtin;
+  $("cartName").readOnly=!!c.builtin;
+  $("cartCategory").disabled=!!c.builtin;
+  $("cartVersion").readOnly=!!c.builtin;
+  $("cartDescription").readOnly=!!c.builtin;
+}
+
+function newCart(){
+  const c={id:uid("cart"),name:"My Cartridge",description:"Custom TAP cartridge",
+    category:"custom",version:"1.0",source:starterCartSource(),created:Date.now(),
+    updated:Date.now(),builtin:false};
+  data.carts.unshift(c);currentCartId=c.id;
+  persist();renderCartList();fillCartEditor(c);toast("New cartridge ready to edit");
+}
+
+function saveCart(){
+  if(currentCartId && getCart(currentCartId)?.builtin){toast("Built-in cartridges cannot be overwritten.");return false}
+  let c=data.carts.find(x=>x.id===currentCartId);
+  if(!c){
+    c={id:uid("cart"),created:Date.now(),builtin:false};
+    data.carts.unshift(c);currentCartId=c.id;
+  }
+  c.name=$("cartName").value.trim()||"Untitled Cartridge";
+  c.category=$("cartCategory").value;
+  c.version=$("cartVersion").value.trim()||"1.0";
+  c.description=$("cartDescription").value.trim();
+  c.source=$("cartEditor").value;
+  c.updated=Date.now();persist();renderCartList();toast("Cartridge saved");
+  return true;
+}
+
+function exportCart(){
+  let c=getCart(currentCartId);
+  if(!c){toast("Choose or create a cartridge.");return}
+  if(c.builtin){toast("Built-in cartridges have no exportable source.");return}
+  saveCart();
+  c=getCart(currentCartId);
+  downloadText(safeFilename(c.name)+".js",c.source||"","text/javascript");
+}
+
+function importCartFile(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const c={id:uid("cart"),name:file.name.replace(/\.(js|txt)$/i,""),
+      description:"Imported JavaScript cartridge",category:"custom",version:"1.0",
+      source:String(reader.result),created:Date.now(),updated:Date.now(),builtin:false};
+    data.carts.unshift(c);currentCartId=c.id;persist();renderCartList();fillCartEditor(c);
+    toast("Imported cartridge. Review its source before launching.");
+    event.target.value="";
+  };
+  reader.readAsText(file);
+}
+
+function launchEditedCart(){
+  let c=currentCartId?getCart(currentCartId):null;
+  if(c&&c.builtin){launchCartridge(c);return}
+  if(!saveCart())return;
+  launchCartridge(getCart(currentCartId));
+}
+
+function launchCartridge(c){
+  if(!c)return;
+  try{
+    stopActiveCart();
+    if(c.builtin){
+      activeCart={id:c.id,actions:[],sel:0};
+      if(c.id==="builtin_home"){home();return}
+      if(c.id==="builtin_scouter"){launchScouter();return}
+      if(c.id==="builtin_reaction"){launchReaction();return}
+      if(c.id==="builtin_code"){launchCodePad();return}
+      if(c.id==="builtin_pixel"){launchPixelQuest();return}
+    }else{
+      let registration=null;
+      const register=(meta,factory)=>{
+        registration={meta:meta||{},factory};
+      };
+      new Function("TAP_CARTRIDGE",c.source)(register);
+      if(!registration||typeof registration.factory!=="function"){
+        throw new Error("Cartridge did not register. Use TAP_CARTRIDGE(metadata, function(tap){...}).");
+      }
+      const runtime=createRuntime(c);
+      registration.factory(runtime);
+      if(typeof runtime.launchHandler!=="function")throw new Error("Cartridge must call tap.onLaunch(function(){...}).");
+      activeCart={id:c.id,actions:runtime.actions,sel:0,runtime};
+      runtime.active=true;
+      runtime.launchHandler();
+      renderActions();
+      data.stats.launches=(data.stats.launches||0)+1;persist();
+    }
+    showView("tap");
+  }catch(e){
+    stopActiveCart();
+    activeCart={id:"error",actions:[{label:"HOME",action:home}],sel:0};
+    screen("<h2>CARTRIDGE ERROR</h2><p>"+escapeHTML(e.message)+"</p><button onclick='home()'>HOME</button>");
+    renderActions();
+    showView("tap");
+  }
+}
+
+function createRuntime(cart){
+  const runtime={
+    launchHandler:null,actions:[],active:false,
+    onLaunch(fn){this.launchHandler=fn},
+    ui:{
+      screen(html){if(runtime.active||activeCart)screen(html)},
+      html(html){if(runtime.active||activeCart)screen(html)},
+      root:$("screen")
+    },
+    message(msg){screen("<h2>"+escapeHTML(String(msg))+"</h2><button onclick='home()'>HOME</button>")},
+    input:{
+      set(items){
+        runtime.actions=Array.isArray(items)?items:[];
+        if(activeCart&&activeCart.runtime===runtime){activeCart.actions=runtime.actions;activeCart.sel=0;renderActions()}
+      },
+      clear(){this.set([])}
+    },
+    navigation:{home},
+    util:{escapeHTML},
+    every(fn,ms){const id=setInterval(fn,ms);timers.add(id);return id},
+    after(fn,ms){const id=setTimeout(fn,ms);timers.add(id);return id}
+  };
+  runtime.storage={
+    get(key){try{return JSON.parse(localStorage.getItem("tap_cart_"+cart.id+"_"+key))}catch(e){return null}},
+    set(key,value){try{localStorage.setItem("tap_cart_"+cart.id+"_"+key,JSON.stringify(value))}catch(e){}},
+    remove(key){try{localStorage.removeItem("tap_cart_"+cart.id+"_"+key)}catch(e){}}
+  };
+  return runtime;
+}
+
+const timers=new Set();
+function stopActiveCart(){
+  timers.forEach(id=>{clearTimeout(id);clearInterval(id)});timers.clear();
+  if(runningCleanup){try{runningCleanup()}catch(e){}runningCleanup=null}
+  if(activeCart&&activeCart.runtime)activeCart.runtime.active=false;
+  activeCart=null;
+  renderActions();
+}
+
+function screen(html){$("screen").innerHTML=html}
+function escapeHTML(s){return String(s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]))}
+
+/* Action list shown under the screen for cartridges that call tap.input.set(). */
+function renderActions(){
+  const bar=$("actionBar");
+  const actions=(activeCart&&activeCart.actions)||[];
+  bar.innerHTML="";
+  bar.classList.toggle("show",actions.length>0);
+  actions.forEach((item,i)=>{
+    const b=document.createElement("button");
+    b.className="act"+(i===activeCart.sel?" sel":"");
+    b.textContent=(i===activeCart.sel?"▶ ":"  ")+(item&&item.label?item.label:"ACTION "+(i+1));
+    b.onclick=()=>{activeCart.sel=i;runAction(i)};
+    bar.appendChild(b);
+  });
+}
+
+function runAction(i){
+  const item=activeCart&&activeCart.actions[i];
+  if(!item)return;
+  try{
+    if(typeof item.action==="function")item.action();
+    else if(typeof item.onPress==="function")item.onPress();
+  }catch(e){screen("<h2>INPUT ERROR</h2><p>"+escapeHTML(e.message)+"</p><button onclick='home()'>HOME</button>")}
+  renderActions();
+}
+
+function home(){
+  stopActiveCart();
+  activeCart={id:"builtin_home",actions:[],sel:0};
+  screen(`<h2>TAP CORE</h2>
+    <p>SELECT CARTRIDGE</p>
+    <button onclick="launchCartridge(getCart('builtin_scouter'))">SCOUTER LITE</button><br><br>
+    <button onclick="launchCartridge(getCart('builtin_reaction'))">REACTION LAB</button><br><br>
+    <button onclick="launchCartridge(getCart('builtin_code'))">CODE PAD</button><br><br>
+    <button onclick="launchCartridge(getCart('builtin_pixel'))">PIXEL QUEST</button><br><br>
+    <p>Use the cartridge library to launch custom programs.</p>`);
+}
+
+function launchScouter(){
+  activeCart={id:"builtin_scouter",actions:[],sel:0};
+  screen(`<h2>SCOUTER LITE</h2>
+    <p>LOCAL PROFILE / TRAINING LOG</p>
+    <p>STR <b>75</b> · SPD <b>77</b></p>
+    <p>END <b>81</b> · SKL <b>49</b></p>
+    <p>CTRL <b>73</b> · TAC <b>73</b></p>
+    <p>ADAPT <b>100</b></p>
+    <button onclick="screen('<h2>SCAN COMPLETE</h2><p>Log your next result in Code Maker.</p><button onclick=&quot;home()&quot;>HOME</button>')">SCAN</button>
+    <button onclick="home()">HOME</button>`);
+}
+
+function launchReaction(){
+  let score=0,round=0,waiting=false,timeout=null;
+  activeCart={id:"builtin_reaction",actions:[],sel:0};
+  function draw(){
+    screen(`<h2>REACTION LAB</h2><p>ROUND ${round+1} / 5</p>
+      <p>SCORE: ${score}</p><p>${waiting?"TARGET! PRESS A":"READY?"}</p>
+      <button onclick="reactionHit()">A / REACT</button>
+      <button onclick="home()">HOME</button>`);
+  }
+  function hit(){
+    if(!waiting){score=Math.max(0,score-1);draw();return}
+    waiting=false;clearTimeout(timeout);score+=2;round++;
+    if(round>=5){
+      activeCart.actions=[{label:"HOME",action:home}];renderActions();
+      screen(`<h2>SESSION COMPLETE</h2><p>SCORE: ${score}</p><button onclick="home()">HOME</button>`);return}
+    startRound();
+  }
+  window.reactionHit=hit;
+  function startRound(){
+    waiting=false;draw();
+    timeout=setTimeout(()=>{waiting=true;draw()},700+Math.random()*1800);
+    timers.add(timeout);
+  }
+  /* A button triggers the reaction hit. */
+  activeCart.actions=[{label:"REACT",action:hit}];
+  renderActions();
+  startRound();
+  runningCleanup=()=>{clearTimeout(timeout);delete window.reactionHit};
+}
+
+function launchCodePad(){
+  activeCart={id:"builtin_code",actions:[{label:"OPEN CODE MAKER",action:()=>showView("code")},{label:"HOME",action:home}],sel:0};
+  screen(`<h2>CODE PAD</h2><p>${data.projects.length} SAVED PROJECT(S)</p>
+    <p>Open Code Maker to edit, preview and manage projects.</p>
+    <button onclick="showView('code')">OPEN CODE MAKER</button>
+    <button onclick="home()">HOME</button>`);
+  renderActions();
+}
+
+function launchPixelQuest(){
+  let step=0;
+  const scenes=[
+    ["FOREST GATE","A path splits in two. Choose a route.","LEFT PATH","RIGHT PATH"],
+    ["OLD SHRINE","A strange machine hums in the dark.","INSPECT","MOVE ON"],
+    ["QUEST COMPLETE","You found the signal hidden in the ruins.","RESTART","HOME"]
+  ];
+  activeCart={id:"builtin_pixel",actions:[],sel:0};
+  function choose(choice){
+    if(step===2){if(choice===0)step=0;else{home();return}}
+    else step++;
+    draw();
+  }
+  function draw(){
+    const s=scenes[Math.min(step,2)];
+    screen(`<h2>${s[0]}</h2><p>${s[1]}</p>
+      <button onclick="questChoice(0)">${s[2]}</button><br><br>
+      <button onclick="questChoice(1)">${s[3]}</button>`);
+    activeCart.actions=[{label:s[2],action:()=>choose(0)},{label:s[3],action:()=>choose(1)}];
+    renderActions();
+  }
+  window.questChoice=choose;
+  draw();
+  runningCleanup=()=>delete window.questChoice;
+}
+
+/* D-pad moves through the action list, A runs the highlighted action, B / center go home. */
+function tapInput(key){
+  if(!activeCart){home();return}
+  if(key==="B"||key==="MENU"){home();return}
+  const actions=activeCart.actions||[];
+  if(!actions.length)return;
+  if(key==="UP"||key==="LEFT"){
+    activeCart.sel=(activeCart.sel-1+actions.length)%actions.length;renderActions();
+  }else if(key==="DOWN"||key==="RIGHT"){
+    activeCart.sel=(activeCart.sel+1)%actions.length;renderActions();
+  }else if(key==="A"){
+    runAction(activeCart.sel||0);
+  }
+}
+
+/* Autosave editor and cartridge form on separate timers so neither cancels the other. */
+$("editor").addEventListener("input",scheduleSave);
+$("projectName").addEventListener("input",scheduleSave);
+["cartName","cartCategory","cartVersion","cartDescription","cartEditor"].forEach(id=>{
+  $(id).addEventListener("input",()=>{
+    if(currentCartId && !getCart(currentCartId)?.builtin){
+      clearTimeout(cartSaveTimer);
+      $("saveStatus").textContent="UNSAVED CHANGES…";
+      cartSaveTimer=setTimeout(saveCurrentCartSilently,450);
+    }
+  });
+});
+function saveCurrentCartSilently(){
+  const c=data.carts.find(x=>x.id===currentCartId);
+  if(!c||c.builtin)return;
+  c.name=$("cartName").value.trim()||"Untitled Cartridge";
+  c.category=$("cartCategory").value;
+  c.version=$("cartVersion").value.trim()||"1.0";
+  c.description=$("cartDescription").value.trim();
+  c.source=$("cartEditor").value;
+  c.updated=Date.now();persist();renderCartList();
+}
+
+/* Deterministic first load: the editor is empty, so never write it back over the project. */
+if(!data.projects.length)data.projects=[starterProject()];
+persist();
+renderProjectList();
+renderCartList();
+loadProject(currentProjectId,false);
+home();
+</script>
+</body>
+</html>
